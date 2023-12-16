@@ -8,7 +8,15 @@ servidor.listen(port, ()=>{
     console.log('Servidor ejecutandose correctamente en el puerto: ', port);
 });
 
-
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://admin:rkWiLiw7VuFk8ShP@cluster0.l9vwzuj.mongodb.net/?retryWrites=true&w=majority";
+const client = new MongoClient(uri, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    }
+});
 async function run() {
     try {
       // Connect the client to the server	(optional starting in v4.7)
@@ -23,6 +31,18 @@ async function run() {
 }
 run().catch(console.dir);
 
+const {initializeApp} = require("firebase/app");
+
+const {getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification} = require("firebase/auth");
+const firebaseConfig = {
+  apiKey: "AIzaSyDMYLBCwpo6UCW3cowLj6-8fpYAWO7O0bA",
+  authDomain: "examenux-48e6d.firebaseapp.com",
+  projectId: "examenux-48e6d",
+  storageBucket: "examenux-48e6d.appspot.com",
+  messagingSenderId: "391485743850",
+  appId: "1:391485743850:web:66c54056eb8093ba366d93",
+  measurementId: "G-1XCY1Q8935"
+};
 
 const app = initializeApp(firebaseConfig);
 //body-parser
@@ -101,6 +121,103 @@ servidor.post("/logOut",  (res) => {
       console.log('Hubo un error');
     });
 });
+servidor.post('/createPost', async (req, res)=>{
+    try {
+        const client = new MongoClient(uri);
+        const mainDB = client.db("mainExamenDB");
+        const Post = mainDB.collection("Posts");
+        const doc = req.body;
+        const result = await Post.insertOne(doc);
+        console.log(
+            `Se inserto un documento con el _id: ${result.insertedId}`,
+        );
+        res.status(200).send("El Post se creo exitosamente")
+    } catch(error){
+        res.status(500).send("No se creo el Post, algo salio mal")
+    }finally {
+        await client.close();
+    }
+    
+})
 
+servidor.get('/listPost', async (req, res)=>{
+    try {
+        const client = new MongoClient(uri);
+        const mainDB = client.db("mainExamenDB");
+        const Post = mainDB.collection("Posts");
+        const query = {};
+        const options = {
+            sort: { Titulo: 1 },
+        };
+        const cursor = Post.find(query, options);
+        if ((await Post.countDocuments(query)) === 0) {
+            res.status(500).send("No se encontraron Posts")
+        }else{
+            let arr = []
+            for await (const doc of cursor) {
+                console.dir(doc);
+                arr.push(doc)
+            }
+            res.status(200).send({
+                documentos: arr,
+            });
+        }
+        
+    } catch(error){
+        res.status(500).send("Algo salio mal")
+        console.log(error);
+    }finally {
+        await client.close();
+    } 
+    run().catch(console.dir);
+})
+
+servidor.put('/editPost/:id', async (req, res)=>{
+    try {
+        const client = new MongoClient(uri);
+        const mainDB = client.db("mainExamenDB");
+        const Post = mainDB.collection("Posts");
+        const filter = {id:req.params.id};
+        const options = { upsert: true };
+        const updateDoc = {
+            $set: {
+            ...req.body,
+          },
+        };
+        const result = await Post.updateOne(filter, updateDoc, options);
+        console.log(
+            `${result.matchedCount} documento cumplio con las caracteristicas establecidas, se actualizaron ${result.modifiedCount} documento(s)`,
+         );
+        res.status(200).send("El post se actualizo correctamente")
+    } catch(error){
+        res.status(500).send("Algo salio mal, no se pudo actualizar el post")
+        console.log(error);
+    }finally {
+        await client.close();
+    } 
+    run().catch(console.dir);
+})
+
+servidor.delete('/deletePost/:id', async (req, res)=>{
+    try {
+        const client = new MongoClient(uri);
+        const mainDB = client.db("mainExamenDB");
+        const Post = mainDB.collection("Posts");
+        const query = {id:req.params.id};
+        const result = await Post.deleteOne(query);
+        if (result.deletedCount === 1) {
+            console.log("Se borro el Post correctamente");
+            res.status(200).send("Se borro el Post correctamente")
+        } else {
+            console.log("Ningun Post concuerda con la informacion brindada, no se borro ninguno");
+        }
+    } catch(error){
+        res.status(500).send("Algo salio mal, no se pudo borrar el post")
+        console.log(error);
+    }finally {
+        await client.close();
+    } 
+    run().catch(console.dir);
+})
 
 

@@ -1,0 +1,39 @@
+1. Create user
+post -> http://localhost:3001/createUser
+
+email : ingrese su email
+password:  ingrese su password
+
+2.Log in
+
+post -> http://localhost:3001/login
+
+email : ingrese su email
+password:  ingrese su password
+
+3.Log out
+
+post -> http://localhost:3001/logOut
+
+4. Create Post
+
+post -> http://localhost:3001/createPost
+
+titulo: titulo del post
+descripcion:  ingrese su post
+
+5. List Post
+
+post -> http://localhost:3001/listPost
+
+6. Edit Post
+
+post -> http://localhost:3001/editPost/<id>
+
+titulo: titulo del post
+descripcion:  ingrese su post
+id : 1
+
+7. Delete Post
+
+post -> http://localhost:3001/deletePost/<id>
